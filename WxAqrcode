@@ -1,0 +1,90 @@
+/**
+	 * 获取微信小程序在线二维码
+	 * 
+	 * @param page
+	 * @param request
+	 * @return ModelAndView
+	 * @throws Exception
+   * @author nikodou
+	 */
+	@RequestMapping("/getWxAqrcode")
+	public ResponseEntity<byte[]> getWxAqrcode(Integer memberId) {
+
+		String appId = "wx0000000000001";// 输入您的appid
+		String secret = "xxxxxxxxxxxxxxxxxxxxxxxx";// 输入你的secret
+		String WX_URL = " https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid="
+				+ appId + "&secret=" + secret;// "https://api.weixin.qq.com/sns/jscode2session?appid="+appId+"&secret="+secret+"&js_code="+code+"&grant_type=authorization_code&redirect_uri=1";
+  		String returnvalue = GET(WX_URL);
+		JSONObject convertvalue = new JSONObject();
+
+		convertvalue = (JSONObject) JSON.parse(returnvalue);
+
+		// System.out.println("return openid is not has "+(String)convertvalue.get("access_token"));
+		String access_token = (String) convertvalue.get("access_token");
+
+		String url = "https://api.weixin.qq.com/wxa/getwxacode?access_token="
+				+ access_token;
+
+		// System.out.println(String.format("curl %s -d \"{\"path\":\"pages/index/index?parentId="+memberId+"\"}\"",url));
+
+		Map<String, Object> rs = sendPostRequest(url,
+				"{\"path\":\"pages/index/index?parentId=" + memberId + "\"}",
+				"utf-8");
+
+		System.out.println(rs.get("respBody"));
+
+		byte[] bs = (byte[]) rs.get("respBody");
+
+		HttpHeaders headers = new HttpHeaders();
+		headers.setContentType(MediaType.IMAGE_PNG);
+		headers.setContentLength(bs.length);
+		// headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+		// headers.setContentDispositionFormData("file", "utf-8");
+
+		return new ResponseEntity<byte[]>(bs, headers, HttpStatus.OK);
+
+	}
+  
+  
+  
+  /**
+  *get请求数据
+  */
+  public static String GET(String url) {
+		String result = "";
+		BufferedReader in = null;
+		InputStream is = null;
+		InputStreamReader isr = null;
+		try {
+			URL realUrl = new URL(url);
+			URLConnection conn = realUrl.openConnection();
+			conn.connect();
+			Map<String, List<String>> map = conn.getHeaderFields();
+			is = conn.getInputStream();
+			isr = new InputStreamReader(is);
+			in = new BufferedReader(isr);
+			String line;
+			while ((line = in.readLine()) != null) {
+				result += line;
+			}
+		} catch (Exception e) {
+		  //在此处抛出异常信息
+    } finally {
+			try {
+				if (in != null) {
+					in.close();
+				}
+				if (is != null) {
+					is.close();
+				}
+				if (isr != null) {
+					isr.close();
+				}
+			} catch (Exception e2) {
+				// 此处抛出异常信息	
+			}
+		}
+		return result;
+	}
+
+  
